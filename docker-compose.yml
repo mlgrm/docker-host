@@ -1,0 +1,85 @@
+version: "3.3"
+
+services:
+
+  traefik:
+    image: "traefik:v3.0"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=sysadmin@samuelhall.org"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.data-dev.samuelhall.org`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+
+  rstudio:
+    image: "rocker/geospatial"
+    container_name: rstudio
+    environment:
+      - PASSWORD="1?&87::Zr2vn"
+      - USERID=2001
+      - GROUPID=2001
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rstudio.rule=Host(`rstudio.data-dev.samuelhall.org`)"
+      - "traefik.http.routers.rstudio.entrypoints=websecure"
+      - "traefik.http.routers.rstudio.tls.certresolver=myresolver"
+
+xwiki:
+    image: "xwiki:lts-postgres-tomcat"
+    container_name: xwiki
+    depends_on:
+      - xwiki_db
+    environment:
+      - DB_USER=xwiki
+      - DB_PASSWORD=deOm]gryitt8
+      - DB_HOST=xwiki-postgres-db
+      #    volumes:
+      #      - xwiki-data:/usr/local/xwiki
+#    networks:
+      #- traefik
+      #- xwiki-db
+    labels:
+      #      - "traefik.docker.network=traefik"
+      #      - "traefik.enable=true"
+      #      - "traefik.xwiki.frontend.rule=Host:wiki.$DOMAIN"
+      #      - "traefik.xwiki.port=8080"
+      #      - "traefik.xwiki.protocol=http"
+      - "traefik.enable=true"
+      - "traefik.http.routers.xwiki.rule=Host(`wiki.data-dev.samuelhall.org`)"
+      - "traefik.http.routers.xwiki.entrypoints=websecure"
+      - "traefik.http.routers.xwiki.tls.certresolver=myresolver"
+
+ xwiki_db:
+    image: "postgres:13"
+    container_name: xwiki-postgres-db
+#    volumes:
+      #- xwiki-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_ROOT_PASSWORD=yad5Flypt_
+      - POSTGRES_PASSWORD=deOm]gryitt8
+      - POSTGRES_USER=xwiki
+      - POSTGRES_DB=xwiki
+      - POSTGRES_INITDB_ARGS="--encoding=UTF8"
+    networks:
+      - xwiki-db
+ 
