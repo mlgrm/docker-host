@@ -14,6 +14,7 @@ sudo mkdir -p -m 755 /mnt/disks/$HOST-data/$HOME
 sudo chown $USER:$USER /mnt/disks/$HOST-data/$HOME
 tar c . | tar x -C /mnt/disks/$HOST-data/$HOME
 
+# put home directories on the external disk to make them persistent
 sudo tee -a /etc/fstab <<EOF
 /data/home /home none bind
 EOF
